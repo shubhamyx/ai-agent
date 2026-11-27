@@ -23,7 +23,8 @@ Turn follow-up questions into standalone queries (resolve "it", "that project", 
 
 You may call several tools, or the same tool more than once. Stop calling tools as soon as \
 you have enough to answer. Cite sources inline with the exact [n] labels from tool results, \
-e.g. [1] or [2][4]. Never invent citations. If the tools found nothing useful, say so plainly. \
+e.g. [1] or [2][4]. Calculator results are not sources; never cite them. Never invent \
+citations. If the tools found nothing useful, say so plainly. \
 Be concise."""
 
 FINALIZE_NOTE = (
@@ -46,7 +47,8 @@ def build_agent(
     *,
     max_steps: int,
     checkpointer=None,
-):
+    interrupt_before: list[str] | None = None,
+):  
     llm_with_tools = llm.bind_tools(tools)
     # same tool schemas (history contains tool calls) but the model may not call any
     llm_final = llm.bind_tools(tools, tool_choice="none")
@@ -89,4 +91,4 @@ def build_agent(
     graph.add_conditional_edges("agent", after_agent, {"tools": "tools", END: END})
     graph.add_conditional_edges("tools", after_tools, {"agent": "agent", "finalize": "finalize"})
     graph.add_edge("finalize", END)
-    return graph.compile(checkpointer=checkpointer)
+    return graph.compile(checkpointer=checkpointer, interrupt_before=interrupt_before)
