@@ -48,7 +48,7 @@ async def upload_document(
 
     data = await file.read(MAX_UPLOAD_BYTES + 1)
     if len(data) > MAX_UPLOAD_BYTES:
-        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "File exceeds 10 MB")
+        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, "File exceeds 10 MB")
     if not data:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "File is empty")
 

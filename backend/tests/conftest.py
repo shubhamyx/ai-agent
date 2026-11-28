@@ -23,6 +23,8 @@ from app.main import app
 from app.services.embeddings import get_embedder
 from app.services.llm import get_llm
 from app.services.vectorstore import ensure_collection, get_qdrant
+from langgraph.checkpoint.memory import InMemorySaver
+from app.agents.checkpoint import get_checkpointer
 
 TEST_DB_URL = settings.database_url.rsplit("/", 1)[0] + "/agent_test"
 
@@ -104,6 +106,7 @@ async def fake_redis():
 
 @pytest_asyncio.fixture
 async def client(fake_llm, fake_redis, fake_embedder, fake_qdrant):
+    saver = InMemorySaver()
     engine = create_async_engine(TEST_DB_URL, poolclass=NullPool)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -120,6 +123,7 @@ async def client(fake_llm, fake_redis, fake_embedder, fake_qdrant):
     app.dependency_overrides[get_redis] = lambda: fake_redis
     app.dependency_overrides[get_embedder] = lambda: fake_embedder
     app.dependency_overrides[get_qdrant] = lambda: fake_qdrant
+    app.dependency_overrides[get_checkpointer] = lambda: saver
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
     app.dependency_overrides.clear()
