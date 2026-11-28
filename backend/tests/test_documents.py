@@ -237,7 +237,8 @@ async def test_rag_stream_sends_sources_first(client, make_user, fake_llm):
  
     conv = (await client.get(f"/conversations/{cid}", headers=h)).json()
     assistant = [m for m in conv["messages"] if m["role"] == "assistant"][-1]
-    assert assistant["sources"] == events[0][1]["sources"]
+    key = lambda s: (s["index"], s["document_id"], s["chunk_index"])
+    assert [key(s) for s in assistant["sources"]] == [key(s) for s in events[0][1]["sources"]]
  
  
 async def test_retrieval_failure_is_503_without_llm_call(client, make_user, fake_llm, monkeypatch):

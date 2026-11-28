@@ -30,6 +30,8 @@ from app.services.embeddings import Embedder, get_embedder
 from app.services.llm import get_llm, to_lc_messages
 from app.services.rag import build_context, retrieve, to_sources
 from app.services.vectorstore import get_qdrant
+from app.agents.checkpoint import get_checkpointer
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/conversations", tags=["conversations"])
@@ -153,11 +155,12 @@ async def delete_conversation(
     conversation_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
+    checkpointer=Depends(get_checkpointer),
 ):
     conv = await get_owned_conversation(conversation_id, db, user)
+    await checkpointer.adelete_thread(str(conversation_id))
     await db.delete(conv)
     await db.commit()
-
 
 @router.post(
     "/{conversation_id}/messages",
